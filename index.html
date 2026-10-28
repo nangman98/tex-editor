@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TeX 편집기</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/stex/stex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root { --bg:#f6f7f9; --panel:#ffffff; --line:#d9dde3; --text:#1d2129; --muted:#6b7280;
+          --accent:#2563eb; --ok:#15803d; --err:#b91c1c; --run:#b45309; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--text);
+               font:13px/1.45 -apple-system, "Apple SD Gothic Neo", sans-serif; }
+  #app { display:grid; grid-template-rows:44px 1fr; height:100vh; }
+  header { display:flex; align-items:center; gap:8px; padding:0 10px; background:var(--panel);
+           border-bottom:1px solid var(--line); }
+  header .title { font-weight:600; margin-right:6px; white-space:nowrap; }
+  header input[type=text] { flex:1; min-width:120px; padding:5px 8px; border:1px solid var(--line); border-radius:6px; font:inherit; }
+  header select, header button { padding:5px 9px; border:1px solid var(--line); border-radius:6px; background:#fff; font:inherit; cursor:pointer; }
+  header button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  #status { white-space:nowrap; font-weight:600; min-width:120px; text-align:right; }
+  #status.ok { color:var(--ok); } #status.error { color:var(--err); cursor:pointer; } #status.running { color:var(--run); }
+  main { display:grid; grid-template-columns:var(--side,220px) 6px 1fr 6px var(--pdfw,48%); min-height:0; }
+  .gutter { cursor:col-resize; background:var(--line); }
+  #files { overflow:auto; background:var(--panel); border-right:1px solid var(--line); padding:6px 0; }
+  #files .dir { padding:6px 10px 2px; color:var(--muted); font-size:12px; }
+  #files .f { padding:3px 10px 3px 18px; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #files .f:hover { background:#eef2ff; } #files .f.cur { background:#dbe5ff; font-weight:600; }
+  #files .f.main::after { content:" ●"; color:var(--accent); font-size:10px; }
+  #editwrap { display:grid; grid-template-rows:30px auto 1fr; min-width:0; min-height:0; background:var(--panel); }
+  #edithead { display:flex; align-items:center; gap:8px; padding:0 10px; border-bottom:1px solid var(--line); color:var(--muted); }
+  #edithead b { color:var(--text); }
+  #banner { display:none; padding:6px 10px; background:#fff7ed; border-bottom:1px solid #fed7aa; }
+  #banner button { margin-left:8px; }
+  #editor { min-height:0; overflow:hidden; }
+  #editor .CodeMirror { height:100%; font:13.5px/1.55 Menlo, "Apple SD Gothic Neo", monospace; }
+  #editor textarea.plain { width:100%; height:100%; border:0; padding:10px; font:13.5px/1.55 Menlo, monospace; resize:none; }
+  #pdfwrap { display:grid; grid-template-rows:30px 1fr auto; min-width:0; min-height:0; background:#e5e7eb; }
+  #pdfhead { display:flex; align-items:center; gap:6px; padding:0 10px; background:var(--panel); border-bottom:1px solid var(--line); color:var(--muted); }
+  #pdfhead button { padding:2px 8px; border:1px solid var(--line); border-radius:5px; background:#fff; cursor:pointer; }
+  #pdfview { overflow:auto; padding:12px 0; }
+  #pdfview .pg { margin:0 auto 12px; width:max-content; box-shadow:0 1px 4px rgba(0,0,0,.25); background:#fff; }
+  #pdfview .pg canvas { display:block; }
+  #pdfview .empty { color:var(--muted); text-align:center; margin-top:40px; }
+  #log { display:none; max-height:40vh; overflow:auto; margin:0; padding:8px 10px; background:#111827; color:#e5e7eb;
+         font:12px/1.4 Menlo, monospace; white-space:pre-wrap; }
+  #log .e { color:#fca5a5; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <span class="title">TeX 편집기</span>
+    <input type="text" id="root" list="recent" placeholder="폴더 경로를 붙여 넣고 Enter">
+    <datalist id="recent"></datalist>
+    <button id="openroot">폴더 열기</button>
+    <label>본판 <select id="mainsel"></select></label>
+    <label><input type="checkbox" id="autosave" checked> 자동 저장</label>
+    <button id="savebtn" class="primary" title="⌘S">저장</button>
+    <span id="status">-</span>
+  </header>
+  <main id="mainarea">
+    <nav id="files"></nav>
+    <div class="gutter" data-g="side"></div>
+    <section id="editwrap">
+      <div id="edithead"><b id="curname">파일을 고르세요</b><span id="dirty"></span></div>
+      <div id="banner">다른 곳에서 이 파일이 바뀌었습니다. <button id="reloaddisk">디스크 내용으로 바꾸기</button><button id="keepmine">내 편집 유지</button></div>
+      <div id="editor"></div>
+    </section>
+    <div class="gutter" data-g="pdf"></div>
+    <section id="pdfwrap">
+      <div id="pdfhead"><span id="pdfname">PDF</span><span style="flex:1"></span>
+        <button id="zoomout">−</button><span id="zoomv">100%</span><button id="zoomin">+</button>
+        <button id="openpdf">새 창</button><button id="logbtn">로그</button></div>
+      <div id="pdfview"><div class="empty">본판을 고르면 PDF가 여기 나옵니다</div></div>
+      <pre id="log"></pre>
+    </section>
+  </main>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const api = async (url, body) => {
+  const r = await fetch(url, body === undefined ? {} : {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  const d = await r.json().catch(() => ({}));
+  return {status:r.status, data:d};
+};
+const dbg = msg => fetch('/api/clientlog', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({msg:String(msg)})}).catch(() => {});
+addEventListener('error', e => dbg('오류: ' + e.message + ' @' + (e.filename || '') + ':' + (e.lineno || '')));
+addEventListener('unhandledrejection', e => dbg('오류(promise): ' + (e.reason && (e.reason.stack || e.reason))));
+let cm = null, plain = null;
+let cur = null, curMtime = null, dirty = false, loading = false, saveTimer = null;
+let mainFile = null, shownPdf = 0, zoom = 1.0, rendering = false, renderAgain = false;
+
+if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+function initEditor() {
+  if (window.CodeMirror) {
+    cm = CodeMirror($('#editor'), {mode:'stex', lineNumbers:true, lineWrapping:true, indentUnit:2});
+    cm.on('change', onEdit);
+  } else {
+    plain = document.createElement('textarea'); plain.className = 'plain';
+    $('#editor').appendChild(plain); plain.addEventListener('input', onEdit);
+  }
+}
+const getText = () => cm ? cm.getValue() : plain.value;
+function setText(t) {
+  loading = true;
+  if (cm) { const c = cm.getCursor(), s = cm.getScrollInfo(); cm.setValue(t); cm.setCursor(c); cm.scrollTo(s.left, s.top); cm.clearHistory(); }
+  else plain.value = t;
+  loading = false;
+}
+function setDirty(v) { dirty = v; $('#dirty').textContent = v ? '● 저장 안 됨' : ''; }
+function onEdit() {
+  if (loading || !cur) return;
+  setDirty(true);
+  clearTimeout(saveTimer);
+  if ($('#autosave').checked) saveTimer = setTimeout(save, 1200);
+}
+
+async function save() {
+  if (!cur || !dirty) return;
+  const text = getText();
+  const r = await api('/api/file', {path:cur, text, base_mtime:curMtime});
+  if (r.status === 409) { $('#banner').style.display = 'block'; return; }
+  if (r.status !== 200) { alert('저장 실패: ' + (r.data.error || r.status)); return; }
+  curMtime = r.data.mtime;
+  if (getText() === text) setDirty(false);
+}
+
+async function openFile(rel) {
+  if (dirty) await save();
+  const r = await api('/api/file?path=' + encodeURIComponent(rel));
+  if (r.status !== 200) { alert('열기 실패: ' + (r.data.error || r.status)); return; }
+  cur = rel; curMtime = r.data.mtime; $('#banner').style.display = 'none';
+  setText(r.data.text); setDirty(false);
+  $('#curname').textContent = rel;
+  document.querySelectorAll('#files .f').forEach(e => e.classList.toggle('cur', e.dataset.p === rel));
+}
+
+async function loadState() {
+  const {data} = await api('/api/state');
+  $('#root').value = data.root || '';
+  $('#recent').innerHTML = (data.recent || []).map(r => `<option value="${r.replace(/"/g,'&quot;')}">`).join('');
+  const box = $('#files'); box.innerHTML = '';
+  let lastDir = null;
+  for (const f of data.files || []) {
+    const i = f.lastIndexOf('/'), dir = i < 0 ? '' : f.slice(0, i), name = f.slice(i + 1);
+    if (dir !== lastDir) { if (dir) { const d = document.createElement('div'); d.className = 'dir'; d.textContent = dir + '/'; box.appendChild(d); } lastDir = dir; }
+    const e = document.createElement('div'); e.className = 'f'; e.dataset.p = f; e.textContent = name; e.title = f;
+    if ((data.mains || []).includes(f)) e.classList.add('main');
+    e.onclick = () => openFile(f); box.appendChild(e);
+  }
+  const sel = $('#mainsel'); sel.innerHTML = (data.mains || []).map(m => `<option>${m}</option>`).join('');
+  const want = data.active && data.mains.includes(data.active) ? data.active : (data.mains || [])[0];
+  if (want) { sel.value = want; await activate(want); if (!cur) openFile(want); }
+}
+
+async function activate(m) {
+  mainFile = m; shownPdf = 0;
+  $('#pdfname').textContent = m.replace(/\.tex$/, '.pdf');
+  await api('/api/activate', {main:m});
+}
+
+async function pollStatus() {
+  if (!mainFile) return;
+  const {data:b} = await api('/api/status?main=' + encodeURIComponent(mainFile));
+  const st = $('#status'); st.className = b.state;
+  const t = b.finished ? new Date(b.finished * 1000).toLocaleTimeString('ko-KR', {hour12:false}) : '';
+  st.textContent = b.state === 'running' ? '컴파일 중…' : b.state === 'ok' ? '완료 ' + t : b.state === 'error' ? '오류 ' + t + ' (로그)' : '-';
+  const log = $('#log');
+  log.innerHTML = (b.errors || []).map(e => `<span class="e">${esc(e)}</span>`).join('\n') + (b.errors && b.errors.length ? '\n\n' : '') + esc(b.log || '');
+  if (b.state === 'error' && b.errors.length && log.style.display !== 'block') log.style.display = 'block';
+  if (b.pdf_mtime && b.pdf_mtime !== shownPdf && b.state !== 'running') { shownPdf = b.pdf_mtime; renderPdf(); }
+}
+const esc = s => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+async function pollDisk() {
+  if (!cur) return;
+  const r = await api('/api/file?meta=1&path=' + encodeURIComponent(cur));
+  if (r.status !== 200 || curMtime === null || r.data.mtime <= curMtime + 1e-3) return;
+  if (!dirty) {
+    const f = await api('/api/file?path=' + encodeURIComponent(cur));
+    if (f.status === 200) { curMtime = f.data.mtime; setText(f.data.text); }
+  } else $('#banner').style.display = 'block';
+}
+
+async function renderPdf() {
+  if (rendering) { renderAgain = true; return; }
+  rendering = true;
+  const view = $('#pdfview');
+  try {
+    const url = '/pdf?main=' + encodeURIComponent(mainFile) + '&t=' + Date.now();
+    if (!window.pdfjsLib) { view.innerHTML = `<iframe src="${url}" style="width:100%;height:100%;border:0"></iframe>`; return; }
+    const ratio = view.scrollHeight ? view.scrollTop / view.scrollHeight : 0;
+    const doc = await pdfjsLib.getDocument(url).promise;
+    const dpr = window.devicePixelRatio || 1, width = Math.max(200, view.clientWidth - 32);
+    const pages = [];
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      const base = page.getViewport({scale:1});
+      const vp = page.getViewport({scale: width / base.width * zoom * dpr});
+      const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
+      c.style.width = (vp.width / dpr) + 'px'; c.style.height = (vp.height / dpr) + 'px';
+      await page.render({canvasContext:c.getContext('2d'), viewport:vp}).promise;
+      const w = document.createElement('div'); w.className = 'pg'; w.appendChild(c); pages.push(w);
+    }
+    view.replaceChildren(...pages);
+    view.scrollTop = ratio * view.scrollHeight;
+  } catch (e) {
+    view.innerHTML = `<div class="empty">PDF를 아직 만들지 못했습니다 (${esc(String(e))})</div>`;
+  } finally {
+    rendering = false;
+    if (renderAgain) { renderAgain = false; renderPdf(); }
+  }
+}
+
+function initGutters() {
+  document.querySelectorAll('.gutter').forEach(g => {
+    g.addEventListener('mousedown', ev => {
+      ev.preventDefault();
+      const area = $('#mainarea').getBoundingClientRect();
+      const move = e => {
+        if (g.dataset.g === 'side') document.documentElement.style.setProperty('--side', Math.max(120, e.clientX - area.left) + 'px');
+        else document.documentElement.style.setProperty('--pdfw', Math.max(240, area.right - e.clientX) + 'px');
+      };
+      const up = () => { removeEventListener('mousemove', move); removeEventListener('mouseup', up); if (mainFile) renderPdf(); if (cm) cm.refresh(); };
+      addEventListener('mousemove', move); addEventListener('mouseup', up);
+    });
+  });
+}
+
+async function openRoot() {
+  const p = $('#root').value.trim(); if (!p) return;
+  if (dirty) await save();
+  const r = await api('/api/root', {root:p});
+  if (r.status !== 200) { alert(r.data.error || '폴더를 열 수 없습니다'); return; }
+  cur = null; curMtime = null; setText(''); $('#curname').textContent = '파일을 고르세요';
+  $('#pdfview').innerHTML = '<div class="empty">본판을 고르면 PDF가 여기 나옵니다</div>';
+  loadState();
+}
+
+initEditor(); initGutters();
+$('#openroot').onclick = openRoot;
+$('#root').addEventListener('keydown', e => { if (e.key === 'Enter') openRoot(); });
+$('#mainsel').onchange = e => activate(e.target.value);
+$('#savebtn').onclick = () => { setDirty(true); save(); };
+$('#zoomin').onclick = () => { zoom = Math.min(2.5, zoom + 0.1); $('#zoomv').textContent = Math.round(zoom * 100) + '%'; renderPdf(); };
+$('#zoomout').onclick = () => { zoom = Math.max(0.4, zoom - 0.1); $('#zoomv').textContent = Math.round(zoom * 100) + '%'; renderPdf(); };
+$('#openpdf').onclick = () => mainFile && window.open('/pdf?main=' + encodeURIComponent(mainFile) + '&t=' + Date.now());
+$('#logbtn').onclick = $('#status').onclick = () => { const l = $('#log'); l.style.display = l.style.display === 'block' ? 'none' : 'block'; };
+$('#reloaddisk').onclick = async () => { setDirty(false); curMtime = 0; $('#banner').style.display = 'none'; await pollDisk(); };
+$('#keepmine').onclick = async () => { $('#banner').style.display = 'none'; const m = await api('/api/file?meta=1&path=' + encodeURIComponent(cur)); curMtime = m.data.mtime; setDirty(true); save(); };
+addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); clearTimeout(saveTimer); setDirty(true); save(); } });
+addEventListener('beforeunload', e => { if (dirty) { save(); e.preventDefault(); } });
+addEventListener('resize', () => { clearTimeout(window._rz); window._rz = setTimeout(() => mainFile && renderPdf(), 300); });
+loadState();
+setInterval(pollStatus, 1000);
+setInterval(pollDisk, 2000);
+</script>
+</body>
+</html>
