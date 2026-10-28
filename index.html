@@ -117,7 +117,7 @@ function onEdit() {
   if (loading || !cur) return;
   setDirty(true);
   clearTimeout(saveTimer);
-  if ($('#autosave').checked) saveTimer = setTimeout(save, 1200);
+  if ($('#autosave').checked) saveTimer = setTimeout(save, 300);
 }
 
 async function save() {
@@ -169,11 +169,11 @@ async function pollStatus() {
   const {data:b} = await api('/api/status?main=' + encodeURIComponent(mainFile));
   const st = $('#status'); st.className = b.state;
   const t = b.finished ? new Date(b.finished * 1000).toLocaleTimeString('ko-KR', {hour12:false}) : '';
-  st.textContent = b.state === 'running' ? '컴파일 중…' : b.state === 'ok' ? '완료 ' + t : b.state === 'error' ? '오류 ' + t + ' (로그)' : '-';
+  st.textContent = b.state === 'running' ? (b.mode === 'full' ? '정식 컴파일 중…' : '컴파일 중…') : b.state === 'ok' ? '완료 ' + t : b.state === 'error' ? '오류 ' + t + ' (로그)' : '-';
   const log = $('#log');
   log.innerHTML = (b.errors || []).map(e => `<span class="e">${esc(e)}</span>`).join('\n') + (b.errors && b.errors.length ? '\n\n' : '') + esc(b.log || '');
   if (b.state === 'error' && b.errors.length && log.style.display !== 'block') log.style.display = 'block';
-  if (b.pdf_mtime && b.pdf_mtime !== shownPdf && b.state !== 'running') { shownPdf = b.pdf_mtime; renderPdf(); }
+  if (b.pdf_mtime && b.pdf_mtime !== shownPdf) { shownPdf = b.pdf_mtime; renderPdf(); }
 }
 const esc = s => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 
@@ -257,8 +257,8 @@ addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key === 's'
 addEventListener('beforeunload', e => { if (dirty) { save(); e.preventDefault(); } });
 addEventListener('resize', () => { clearTimeout(window._rz); window._rz = setTimeout(() => mainFile && renderPdf(), 300); });
 loadState();
-setInterval(pollStatus, 1000);
-setInterval(pollDisk, 2000);
+setInterval(pollStatus, 250);
+setInterval(pollDisk, 1000);
 </script>
 </body>
 </html>

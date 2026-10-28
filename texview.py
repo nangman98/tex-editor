@@ -6,6 +6,7 @@
 - 폴더 안의 .tex/.sty/.bib/.cls가 바뀌면(편집기에서 저장하든 다른 프로그램이 고치든) 보고 있는 본판을 다시 컴파일한다.
 - PDF는 폴더에 `컴파일_PDF/`가 있으면 그곳에, 없으면 폴더 바로 아래에 본판 이름으로 만든다.
 """
+import hashlib
 import json
 import os
 import shutil
@@ -25,9 +26,13 @@ INDEX_HTML = APP_DIR / "index.html"
 TECTONIC = shutil.which("tectonic") or "/opt/homebrew/bin/tectonic"
 SRC_EXT = {".tex", ".sty", ".bib", ".cls"}
 SKIP_DIRS = {".git", "__pycache__", "node_modules"}
+QUICK_RERUNS = "1"   # 미리보기 컴파일: TeX 2회(차례·참조가 들어가는 최소). 정식 컴파일은 tectonic 기본(수렴할 때까지)
+SETTLE_DELAY = 1.5   # 미리보기 뒤 입력이 이만큼(초) 멈추면 정식 컴파일
+WATCH_INTERVAL = 0.3 # 다른 프로그램의 파일 수정을 확인하는 주기(초)
+BUILD_DIR = APP_DIR / ".build"
 
 lock = threading.Lock()
-state = {"root": None, "recent": [], "active": None, "builds": {}, "last_main": {}}
+state = {"root": None, "recent": [], "active": None, "builds": {}, "last_main": {}, "seen": None}
 
 
 def load_config():
@@ -54,9 +59,12 @@ def set_root(path):
     if not p.is_dir():
         raise ValueError(f"폴더가 아닙니다: {p}")
     with lock:
+        for b in state["builds"].values():
+            b.close()
         state["root"] = p
         state["active"] = state["last_main"].get(str(p))
         state["builds"] = {}
+        state["seen"] = None
         state["recent"] = [str(p)] + [r for r in state["recent"] if r != str(p)][:9]
     save_config()
 
@@ -96,13 +104,14 @@ def find_mains(files):
     return mains
 
 
-def outdir():
-    d = state["root"] / "컴파일_PDF"
-    return d if d.is_dir() else state["root"]
+def outdir(root=None):
+    root = root or state["root"]
+    d = root / "컴파일_PDF"
+    return d if d.is_dir() else root
 
 
-def pdf_path(main):
-    return outdir() / (Path(main).stem + ".pdf")
+def pdf_path(main, root=None):
+    return outdir(root) / (Path(main).stem + ".pdf")
 
 
 def src_mtime():
@@ -115,59 +124,135 @@ def src_mtime():
     return m
 
 
-def new_build():
-    return {"state": "idle", "log": "", "errors": [], "started": 0.0, "finished": 0.0,
-            "pdf_mtime": 0.0, "pending": False}
+def new_info():
+    return {"state": "idle", "mode": "", "log": "", "errors": [], "started": 0.0,
+            "finished": 0.0, "pdf_mtime": 0.0}
 
 
-def compile_main(main):
-    with lock:
-        b = state["builds"].setdefault(main, new_build())
-        if b["state"] == "running":
-            b["pending"] = True
+class Builder:
+    """본판 하나의 컴파일 담당.
+
+    저장되면 미리보기 컴파일(quick, TeX 2회)을 바로 돌리고, 입력이 SETTLE_DELAY초 멈추면 정식 컴파일(full)로
+    한 번 더 맞춘다. 정식 컴파일 중에 새 저장이 오면 정식을 끊고 미리보기를 먼저 한다.
+    결과는 BUILD_DIR에서 만든 뒤 내용이 바뀐 경우에만 PDF 자리로 통째로 바꿔 넣는다.
+    """
+
+    def __init__(self, root, main):
+        self.root, self.main = root, main
+        self.tmp = BUILD_DIR / hashlib.sha1(f"{root}|{main}".encode()).hexdigest()[:12]
+        self.cv = threading.Condition()
+        self.want = None
+        self.full_due = None
+        self.proc = None
+        self.closed = False
+        self.info = new_info()
+        pdf = self.pdf()
+        if pdf.exists():
+            self.info.update(state="ok", pdf_mtime=pdf.stat().st_mtime)
+        threading.Thread(target=self.loop, daemon=True).start()
+
+    def pdf(self):
+        return pdf_path(self.main, self.root)
+
+    def request(self, mode):
+        with self.cv:
+            if mode == "quick":
+                self.want, self.full_due = "quick", None
+                if self.proc is not None and self.info["mode"] == "full":
+                    self.proc.terminate()
+            elif self.want is None:
+                self.want = "full"
+            self.cv.notify()
+
+    def close(self):
+        with self.cv:
+            self.closed = True
+            if self.proc is not None:
+                self.proc.terminate()
+            self.cv.notify()
+
+    def loop(self):
+        while True:
+            with self.cv:
+                while self.want is None and not self.closed:
+                    if self.full_due is not None and time.time() >= self.full_due:
+                        self.want, self.full_due = "full", None
+                        break
+                    self.cv.wait(None if self.full_due is None else max(0.05, self.full_due - time.time()))
+                if self.closed:
+                    return
+                mode, self.want = self.want, None
+            self.run(mode)
+
+    def run(self, mode):
+        self.tmp.mkdir(parents=True, exist_ok=True)
+        args = [TECTONIC, "--outdir", str(self.tmp)]
+        if mode == "quick":
+            args += ["--reruns", QUICK_RERUNS]
+        args.append(self.main)
+        with self.cv:
+            if self.closed:
+                return
+            try:
+                proc = self.proc = subprocess.Popen(args, cwd=self.root, stdout=subprocess.PIPE,
+                                                    stderr=subprocess.STDOUT, text=True)
+            except OSError as e:
+                self.info.update(state="error", mode=mode, log=f"tectonic 실행 실패: {e}",
+                                 errors=[str(e)], finished=time.time())
+                return
+            self.info.update(state="running", mode=mode, started=time.time())
+        try:
+            log, _ = proc.communicate(timeout=600)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            log, _ = proc.communicate()
+        with self.cv:
+            self.proc = None
+        if proc.returncode < 0 and not self.closed:  # 새 저장 때문에 끊음: 다음 요청이 이어 받는다
             return
-        b["state"] = "running"
-        b["started"] = time.time()
-        b["pending"] = False
-    threading.Thread(target=_run_compile, args=(main, state["root"]), daemon=True).start()
+        ok = proc.returncode == 0
+        built = self.tmp / (Path(self.main).stem + ".pdf")
+        dst = self.pdf()
+        if ok and built.exists() and (not dst.exists() or dst.read_bytes() != built.read_bytes()):
+            part = dst.with_name("." + dst.name + ".part")
+            shutil.copyfile(built, part)
+            os.replace(part, dst)
+        errors = [ln for ln in log.splitlines() if ln.startswith("error") or ln.startswith("!")][:30]
+        with self.cv:
+            self.info.update(state="ok" if ok else "error", mode=mode, log=log[-30000:], errors=errors,
+                             finished=time.time(), pdf_mtime=dst.stat().st_mtime if dst.exists() else 0.0)
+            if ok and mode == "quick" and self.want is None:
+                self.full_due = time.time() + SETTLE_DELAY
 
 
-def _run_compile(main, root):
-    od = outdir()
-    try:
-        r = subprocess.run([TECTONIC, "--outdir", str(od), main], cwd=root,
-                           capture_output=True, text=True, timeout=600)
-        log, ok = r.stdout + r.stderr, r.returncode == 0
-    except (OSError, subprocess.SubprocessError) as e:
-        log, ok = f"tectonic 실행 실패: {e}", False
-    errors = [ln for ln in log.splitlines() if ln.startswith("error") or ln.startswith("!")][:30]
-    pdf = pdf_path(main)
+def builder(main):
     with lock:
-        if state["root"] != root:  # 컴파일 중에 폴더가 바뀜
-            return
-        b = state["builds"][main]
-        b.update(state="ok" if ok else "error", log=log[-30000:], errors=errors,
-                 finished=time.time(), pdf_mtime=pdf.stat().st_mtime if pdf.exists() else 0.0)
-        again = b["pending"]
-        b["pending"] = False
-    if again:
-        compile_main(main)
+        b = state["builds"].get(main)
+        if b is None:
+            b = state["builds"][main] = Builder(state["root"], main)
+        return b
+
+
+def note_seen(m):
+    with lock:
+        if state["seen"] is None or m > state["seen"]:
+            state["seen"] = m
 
 
 def watcher():
-    last = None
     while True:
-        time.sleep(1.0)
+        time.sleep(WATCH_INTERVAL)
         if state["root"] is None or state["active"] is None:
-            last = None
             continue
         try:
             m = src_mtime()
         except OSError:
             continue
-        if last is not None and m > last:
-            compile_main(state["active"])
-        last = m
+        with lock:
+            seen = state["seen"]
+        note_seen(m)
+        if seen is not None and m > seen:
+            builder(state["active"]).request("quick")
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -217,12 +302,11 @@ class Handler(BaseHTTPRequestHandler):
                 else:
                     self.send_json({"text": p.read_text(encoding="utf-8"), "mtime": mtime})
             elif u.path == "/api/status":
-                main = q.get("main")
                 with lock:
-                    b = dict(state["builds"].get(main, new_build()))
-                b["log"] = b["log"][-6000:]
-                b["src_mtime"] = src_mtime()
-                self.send_json(b)
+                    b = state["builds"].get(q.get("main"))
+                info = dict(b.info) if b else new_info()
+                info["log"] = info["log"][-6000:]
+                self.send_json(info)
             elif u.path == "/pdf":
                 p = pdf_path(q["main"])
                 data = p.read_bytes()
@@ -256,28 +340,28 @@ class Handler(BaseHTTPRequestHandler):
                                         "mtime": p.stat().st_mtime}, 409)
                         return
                 p.write_text(text, encoding="utf-8")
-                self.send_json({"mtime": p.stat().st_mtime})
+                mtime = p.stat().st_mtime
+                note_seen(mtime)
+                if state["active"]:
+                    builder(state["active"]).request("quick")
+                self.send_json({"mtime": mtime})
             elif u.path == "/api/activate":
                 main = body["main"]
                 safe_path(main)
                 with lock:
                     state["active"] = main
                     state["last_main"][str(state["root"])] = main
-                    b = state["builds"].setdefault(main, new_build())
                 save_config()
-                pdf = pdf_path(main)
-                if b["state"] != "running":
-                    if not pdf.exists() or pdf.stat().st_mtime < src_mtime():
-                        compile_main(main)
-                    else:
-                        with lock:
-                            b.update(state="ok", pdf_mtime=pdf.stat().st_mtime)
+                b = builder(main)
+                pdf = b.pdf()
+                if not pdf.exists() or pdf.stat().st_mtime < src_mtime():
+                    b.request("full")
                 self.send_json({"ok": True})
             elif u.path == "/api/clientlog":
                 print(f"[화면] {time.strftime('%H:%M:%S')} {body.get('msg', '')}", flush=True)
                 self.send_json({"ok": True})
             elif u.path == "/api/compile":
-                compile_main(body["main"])
+                builder(body["main"]).request("full")
                 self.send_json({"ok": True})
             else:
                 self.send_json({"error": "없는 주소"}, 404)
