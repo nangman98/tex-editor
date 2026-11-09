@@ -36,7 +36,7 @@ zsh ~/TeX편집기/make_app.sh      # ~/Applications/TeX 편집기.app 생성
 | 위쪽 "본판" | `\documentclass`가 있는 파일 중 PDF로 볼 것. 폴더마다 마지막 선택을 기억 |
 | 오른쪽 위 −/+ · 새 창 · 로그 | PDF 확대, 인쇄·저장용 PDF 창, 컴파일 로그. 컴파일 오류가 나면 로그가 자동으로 열림 |
 
-PDF는 폴더에 `컴파일_PDF/`가 있으면 그 안에, 없으면 폴더 바로 아래에 본판 이름(`thesis.tex` → `thesis.pdf`)으로 생긴다.
+PDF는 폴더에 `컴파일_PDF/` 또는 번호 붙은 `NN_컴파일_PDF/`가 있으면 그 안에, 없으면 폴더 바로 아래에 본판 이름(`thesis.tex` → `thesis.pdf`)으로 생긴다.
 
 ## 동작 방식
 

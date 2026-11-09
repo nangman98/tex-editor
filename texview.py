@@ -4,11 +4,12 @@
 실행: python3 texview.py [폴더]   → 브라우저에서 http://127.0.0.1:8765
 - 127.0.0.1에만 열린다. 선택한 폴더 밖의 파일은 읽거나 쓰지 않는다.
 - 폴더 안의 .tex/.sty/.bib/.cls가 바뀌면(편집기에서 저장하든 다른 프로그램이 고치든) 보고 있는 본판을 다시 컴파일한다.
-- PDF는 폴더에 `컴파일_PDF/`가 있으면 그곳에, 없으면 폴더 바로 아래에 본판 이름으로 만든다.
+- PDF는 폴더에 `컴파일_PDF/`(또는 `NN_컴파일_PDF/`)가 있으면 그곳에, 없으면 폴더 바로 아래에 본판 이름으로 만든다.
 """
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -106,8 +107,10 @@ def find_mains(files):
 
 def outdir(root=None):
     root = root or state["root"]
-    d = root / "컴파일_PDF"
-    return d if d.is_dir() else root
+    for d in sorted(root.iterdir()):  # "컴파일_PDF" 또는 번호 붙은 "NN_컴파일_PDF"
+        if d.is_dir() and re.fullmatch(r"(\d\d_)?컴파일_PDF", d.name):
+            return d
+    return root
 
 
 def pdf_path(main, root=None):
