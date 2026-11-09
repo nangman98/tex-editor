@@ -8,6 +8,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/stex/stex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="/snippets.js"></script>
 <style>
   :root { --bg:#f6f7f9; --panel:#ffffff; --line:#d9dde3; --text:#1d2129; --muted:#6b7280;
           --accent:#2563eb; --ok:#15803d; --err:#b91c1c; --run:#b45309; }
@@ -48,6 +51,32 @@
   #log { display:none; max-height:40vh; overflow:auto; margin:0; padding:8px 10px; background:#111827; color:#e5e7eb;
          font:12px/1.4 Menlo, monospace; white-space:pre-wrap; }
   #log .e { color:#fca5a5; }
+  #edithead .hint { margin-left:auto; font-size:12px; }
+  #edithead .hint kbd { font:11px Menlo, monospace; padding:0 4px; border:1px solid var(--line); border-radius:4px; background:var(--bg); }
+  /* 약어 "/" 메뉴 (snippets.js) */
+  .snip-menu, .snip-prev { position:fixed; z-index:50; display:none; background:#fff; border:1px solid #e3e2e0; border-radius:10px;
+                           box-shadow:0 0 0 1px rgba(15,15,15,.03), 0 6px 18px rgba(15,15,15,.12); }
+  .snip-menu { width:330px; }
+  .snip-list { max-height:340px; overflow:auto; padding:6px 0; }
+  .snip-grp { padding:10px 14px 4px; font-size:11.5px; color:#787774; font-weight:500; }
+  .snip-row { display:flex; align-items:center; gap:10px; margin:0 6px; padding:4px 8px; border-radius:6px; cursor:pointer; }
+  .snip-row.on { background:rgba(55,53,47,.08); }
+  .snip-ic { flex:none; width:26px; height:26px; display:grid; place-items:center; border:1px solid #e3e2e0; border-radius:5px;
+             background:#fff; font:13px "Times New Roman", "Apple SD Gothic Neo", serif; color:#37352f; overflow:hidden; white-space:nowrap; }
+  .snip-nm { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#37352f; }
+  .snip-sc { flex:none; color:#9b9a97; font:11.5px Menlo, monospace; white-space:pre; }
+  .snip-none { padding:10px 14px; color:#9b9a97; }
+  .snip-foot { display:flex; justify-content:space-between; padding:8px 14px; border-top:1px solid #ededec; color:#37352f; }
+  .snip-foot span:last-child { color:#9b9a97; font-size:12px; }
+  .snip-prev { width:280px; padding:10px; }
+  .snip-card { min-height:64px; display:grid; place-items:center; padding:8px; border:1px solid #ededec; border-radius:6px; overflow:auto; }
+  .snip-card .katex-display { margin:0; }
+  .snip-card .katex { font-size:1.6em; }
+  .snip-card.raw { place-items:center start; font:12px/1.5 Menlo, monospace; white-space:pre-wrap; color:#37352f; }
+  .snip-code { margin-top:8px; font:11.5px/1.45 Menlo, monospace; color:#6b7280; white-space:pre-wrap; word-break:break-all; }
+  .snip-desc { margin-top:8px; font-size:12px; line-height:1.5; color:#37352f; }
+  .snip-ghost { color:#b4b4b0; pointer-events:none; }
+  .cm-snip { background:rgba(37,99,235,.10); border-bottom:1px solid rgba(37,99,235,.5); }
 </style>
 </head>
 <body>
@@ -66,7 +95,7 @@
     <nav id="files"></nav>
     <div class="gutter" data-g="side"></div>
     <section id="editwrap">
-      <div id="edithead"><b id="curname">파일을 고르세요</b><span id="dirty"></span></div>
+      <div id="edithead"><b id="curname">파일을 고르세요</b><span id="dirty"></span><span class="hint"><kbd>/</kbd> 약어 목록 · 약어 뒤 <kbd>Tab</kbd></span></div>
       <div id="banner">다른 곳에서 이 파일이 바뀌었습니다. <button id="reloaddisk">디스크 내용으로 바꾸기</button><button id="keepmine">내 편집 유지</button></div>
       <div id="editor"></div>
     </section>
@@ -243,6 +272,7 @@ async function openRoot() {
 }
 
 initEditor(); initGutters();
+if (cm && window.Snippets) Snippets.attach(cm);
 $('#openroot').onclick = openRoot;
 $('#root').addEventListener('keydown', e => { if (e.key === 'Enter') openRoot(); });
 $('#mainsel').onchange = e => activate(e.target.value);

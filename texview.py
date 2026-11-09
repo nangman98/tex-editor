@@ -23,7 +23,9 @@ HOST = "127.0.0.1"
 PORT = int(os.environ.get("TEXVIEW_PORT", 8765))
 APP_DIR = Path(__file__).resolve().parent
 CONFIG_PATH = Path(os.environ.get("TEXVIEW_CONFIG", APP_DIR / "config.json"))
-INDEX_HTML = APP_DIR / "index.html"
+STATIC = {"/": ("index.html", "text/html; charset=utf-8"),          # 화면과 약어 기능(snippets.js·snippets.json)
+          "/snippets.js": ("snippets.js", "text/javascript; charset=utf-8"),
+          "/snippets.json": ("snippets.json", "application/json; charset=utf-8")}
 TECTONIC = shutil.which("tectonic") or "/opt/homebrew/bin/tectonic"
 SRC_EXT = {".tex", ".sty", ".bib", ".cls"}
 SKIP_DIRS = {".git", "__pycache__", "node_modules"}
@@ -279,10 +281,11 @@ class Handler(BaseHTTPRequestHandler):
         u = urlparse(self.path)
         q = {k: v[0] for k, v in parse_qs(u.query).items()}
         try:
-            if u.path == "/":
-                data = INDEX_HTML.read_bytes()
+            if u.path in STATIC:
+                name, ctype = STATIC[u.path]
+                data = (APP_DIR / name).read_bytes()
                 self.send_response(200)
-                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Type", ctype)
                 self.send_header("Cache-Control", "no-store")
                 self.send_header("Content-Length", str(len(data)))
                 self.end_headers()

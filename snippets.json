@@ -1,0 +1,805 @@
+{
+ "note": "TeX 편집기 약어 목록. 고친 뒤 창을 새로 고치면(⌘R) 바로 반영된다. 형식은 README.md의 '약어 목록 고치기'.",
+ "groups": [
+  {
+   "name": "파동함수·양자역학",
+   "items": [
+    {
+     "trigger": "psi",
+     "name": "ψ 파동함수",
+     "icon": "ψ",
+     "body": "\\psi",
+     "math": true
+    },
+    {
+     "trigger": "Psi",
+     "name": "Ψ 다체 파동함수",
+     "icon": "Ψ",
+     "body": "\\Psi",
+     "math": true
+    },
+    {
+     "trigger": "psii",
+     "name": "ψᵢ(r) 오비탈",
+     "icon": "ψᵢ",
+     "body": "\\psi_${1:i}(\\mathbf{r})",
+     "math": true,
+     "desc": "아래 첨자를 바로 고칠 수 있게 선택된 채로 들어간다"
+    },
+    {
+     "trigger": "psink",
+     "name": "ψₙₖ(r) Bloch 상태",
+     "icon": "ψₙₖ",
+     "body": "\\psi_{n\\mathbf{k}}(\\mathbf{r})",
+     "math": true
+    },
+    {
+     "trigger": "abs2",
+     "name": "|ψ|² 확률 밀도",
+     "icon": "|ψ|²",
+     "body": "|${1:\\psi}|^2",
+     "math": true,
+     "desc": "eigenchannel 캡션의 등치면 표기"
+    },
+    {
+     "trigger": "dens",
+     "name": "n(r) 전자 밀도",
+     "icon": "n(r)",
+     "body": "n(\\mathbf{r})=\\sum_{i}f_i\\,|\\psi_i(\\mathbf{r})|^2",
+     "math": true
+    },
+    {
+     "trigger": "ket",
+     "name": "|ψ⟩ 켓",
+     "icon": "|⟩",
+     "body": "|${1:\\psi}\\rangle",
+     "math": true
+    },
+    {
+     "trigger": "bra",
+     "name": "⟨ψ| 브라",
+     "icon": "⟨|",
+     "body": "\\langle ${1:\\psi}|",
+     "math": true
+    },
+    {
+     "trigger": "braket",
+     "name": "⟨φ|ψ⟩ 내적",
+     "icon": "⟨|⟩",
+     "body": "\\langle ${1:\\phi}|${2:\\psi}\\rangle",
+     "math": true,
+     "desc": "Tab으로 두 칸을 차례로 고친다"
+    },
+    {
+     "trigger": "mel",
+     "name": "⟨φ|Ĥ|ψ⟩ 행렬 요소",
+     "icon": "⟨Ĥ⟩",
+     "body": "\\langle ${1:\\phi}|${2:\\hat{H}}|${3:\\psi}\\rangle",
+     "math": true,
+     "desc": "Tab으로 세 칸을 차례로 고친다"
+    },
+    {
+     "trigger": "proj",
+     "name": "|ψ⟩⟨ψ| 사영 연산자",
+     "icon": "|⟩⟨|",
+     "body": "|${1:\\psi}\\rangle\\langle ${2:\\psi}|",
+     "math": true
+    },
+    {
+     "trigger": "ham",
+     "name": "Ĥ 해밀토니안",
+     "icon": "Ĥ",
+     "body": "\\hat{H}",
+     "math": true
+    },
+    {
+     "trigger": "hks",
+     "name": "Ĥ_KS Kohn–Sham 해밀토니안",
+     "icon": "Ĥₖₛ",
+     "body": "\\hat{H}_\\mathrm{KS}",
+     "math": true
+    },
+    {
+     "trigger": "ks",
+     "name": "Kohn–Sham 방정식",
+     "icon": "KS",
+     "body": "\\hat{H}_\\mathrm{KS}\\,\\psi_i(\\mathbf{r})=\\varepsilon_i\\,\\psi_i(\\mathbf{r})",
+     "math": true
+    },
+    {
+     "trigger": "schr",
+     "name": "Schrödinger 방정식",
+     "icon": "ĤΨ",
+     "body": "\\hat{H}\\Psi = E\\Psi",
+     "math": true
+    },
+    {
+     "trigger": "kin",
+     "name": "운동 에너지 연산자",
+     "icon": "∇²",
+     "body": "-\\frac{\\hbar^2}{2m}\\nabla^2",
+     "math": true
+    },
+    {
+     "trigger": "hbar",
+     "name": "ℏ 디랙 상수",
+     "icon": "ℏ",
+     "body": "\\hbar",
+     "math": true
+    },
+    {
+     "trigger": "eikr",
+     "name": "평면파 위상 e^{ik·r}",
+     "icon": "eⁱᵏʳ",
+     "body": "e^{i\\mathbf{k}\\cdot\\mathbf{r}}",
+     "math": true
+    },
+    {
+     "trigger": "epsi",
+     "name": "εᵢ 고유값",
+     "icon": "εᵢ",
+     "body": "\\varepsilon_${1:i}",
+     "math": true
+    }
+   ]
+  },
+  {
+   "name": "수송 (NEGF·Landauer)",
+   "items": [
+    {
+     "trigger": "ef",
+     "name": "E_F 페르미 준위",
+     "icon": "E_F",
+     "body": "E_\\mathrm{F}",
+     "math": true
+    },
+    {
+     "trigger": "eef",
+     "name": "E − E_F 에너지 축",
+     "icon": "E−E_F",
+     "body": "E-E_\\mathrm{F}",
+     "math": true
+    },
+    {
+     "trigger": "te",
+     "name": "T(E) 투과",
+     "icon": "T(E)",
+     "body": "T(E)",
+     "math": true
+    },
+    {
+     "trigger": "caroli",
+     "name": "투과 Caroli 식",
+     "icon": "Tr",
+     "body": "T(E)=\\mathrm{Tr}\\big[\\Gamma_\\mathrm{L}(E)\\,G_\\mathrm{C}(E)\\,\\Gamma_\\mathrm{R}(E)\\,G_\\mathrm{C}^\\dagger(E)\\big]",
+     "math": true
+    },
+    {
+     "trigger": "gc",
+     "name": "G_C(E) 중앙 영역 Green 함수",
+     "icon": "G",
+     "body": "G_\\mathrm{C}(E)",
+     "math": true
+    },
+    {
+     "trigger": "gcd",
+     "name": "G_C†(E) 앞섬 Green 함수",
+     "icon": "G†",
+     "body": "G_\\mathrm{C}^\\dagger(E)",
+     "math": true
+    },
+    {
+     "trigger": "gam",
+     "name": "Γ(E) 전극 결합 행렬",
+     "icon": "Γ",
+     "body": "\\Gamma_\\mathrm{${1:L}}(E)",
+     "math": true,
+     "desc": "전극 이름 L이 선택된 채로 들어간다"
+    },
+    {
+     "trigger": "sig",
+     "name": "Σ(E) 전극 자기 에너지",
+     "icon": "Σ",
+     "body": "\\Sigma_\\mathrm{${1:L}}(E)",
+     "math": true,
+     "desc": "전극 이름 L이 선택된 채로 들어간다"
+    },
+    {
+     "trigger": "mul",
+     "name": "μ_L 왼쪽 전극 화학 퍼텐셜",
+     "icon": "μL",
+     "body": "\\mu_\\mathrm{L}",
+     "math": true
+    },
+    {
+     "trigger": "mur",
+     "name": "μ_R 오른쪽 전극 화학 퍼텐셜",
+     "icon": "μR",
+     "body": "\\mu_\\mathrm{R}",
+     "math": true
+    },
+    {
+     "trigger": "bias",
+     "name": "μ_R − μ_L 바이어스 창",
+     "icon": "μR−μL",
+     "body": "\\mu_\\mathrm{R}-\\mu_\\mathrm{L}",
+     "math": true
+    },
+    {
+     "trigger": "landauer",
+     "name": "Landauer 전류 식",
+     "icon": "I(V)",
+     "body": "I(V)=\\frac{2e}{h}\\int T(E,V)\\big[f_\\mathrm{L}(E)-f_\\mathrm{R}(E)\\big]\\,dE",
+     "math": true
+    },
+    {
+     "trigger": "fermi",
+     "name": "Fermi–Dirac 분포",
+     "icon": "f(E)",
+     "body": "f(E)=\\frac{1}{e^{(E-\\mu)/k_\\mathrm{B}T}+1}",
+     "math": true
+    },
+    {
+     "trigger": "kbt",
+     "name": "k_B T 열에너지",
+     "icon": "kT",
+     "body": "k_\\mathrm{B}T",
+     "math": true
+    },
+    {
+     "trigger": "tr",
+     "name": "Tr[ ] 대각합",
+     "icon": "Tr",
+     "body": "\\mathrm{Tr}\\big[${1}\\big]",
+     "math": true
+    },
+    {
+     "trigger": "dag",
+     "name": "† 에르미트 켤레",
+     "icon": "†",
+     "body": "^\\dagger",
+     "math": true
+    }
+   ]
+  },
+  {
+   "name": "수식 꼴",
+   "items": [
+    {
+     "trigger": "rm",
+     "name": "로만 글자 \\mathrm{ }",
+     "icon": "rm",
+     "body": "\\mathrm{${1}}",
+     "math": true
+    },
+    {
+     "trigger": "srm",
+     "name": "로만 아래 첨자 _\\mathrm{ }",
+     "icon": "xᵣₘ",
+     "body": "_\\mathrm{${1}}",
+     "math": true,
+     "desc": "E_\\mathrm{F} 같은 아래 첨자"
+    },
+    {
+     "trigger": "bf",
+     "name": "굵은 글자 \\mathbf{ }",
+     "icon": "bf",
+     "body": "\\mathbf{${1}}",
+     "math": true
+    },
+    {
+     "trigger": "vr",
+     "name": "r 위치 벡터",
+     "icon": "𝐫",
+     "body": "\\mathbf{r}",
+     "math": true
+    },
+    {
+     "trigger": "vk",
+     "name": "k 파수 벡터",
+     "icon": "𝐤",
+     "body": "\\mathbf{k}",
+     "math": true
+    },
+    {
+     "trigger": "frac",
+     "name": "분수",
+     "icon": "a/b",
+     "body": "\\frac{${1}}{${2}}",
+     "math": true
+    },
+    {
+     "trigger": "sum",
+     "name": "합",
+     "icon": "∑",
+     "body": "\\sum_{${1:i}}",
+     "math": true
+    },
+    {
+     "trigger": "int",
+     "name": "적분",
+     "icon": "∫",
+     "body": "\\int ${1}\\,d${2:E}",
+     "math": true
+    },
+    {
+     "trigger": "sq",
+     "name": "제곱근",
+     "icon": "√",
+     "body": "\\sqrt{${1}}",
+     "math": true
+    },
+    {
+     "trigger": "hat",
+     "name": "연산자 모자 ^",
+     "icon": "x̂",
+     "body": "\\hat{${1}}",
+     "math": true
+    },
+    {
+     "trigger": "tld",
+     "name": "물결 ~",
+     "icon": "x̃",
+     "body": "\\tilde{${1}}",
+     "math": true
+    },
+    {
+     "trigger": "lr",
+     "name": "크기 맞춤 괄호 ( )",
+     "icon": "( )",
+     "body": "\\left(${1}\\right)",
+     "math": true
+    },
+    {
+     "trigger": "bigb",
+     "name": "대괄호 \\big[ \\big]",
+     "icon": "[ ]",
+     "body": "\\big[${1}\\big]",
+     "math": true
+    },
+    {
+     "trigger": "abs",
+     "name": "절댓값",
+     "icon": "|x|",
+     "body": "|${1}|",
+     "math": true
+    },
+    {
+     "trigger": "sup",
+     "name": "위 첨자 ^{ }",
+     "icon": "xⁿ",
+     "body": "^{${1}}",
+     "math": true
+    },
+    {
+     "trigger": "sub",
+     "name": "아래 첨자 _{ }",
+     "icon": "xₙ",
+     "body": "_{${1}}",
+     "math": true
+    },
+    {
+     "trigger": "times",
+     "name": "× 곱",
+     "icon": "×",
+     "body": "\\times",
+     "math": true
+    },
+    {
+     "trigger": "deg",
+     "name": "° 각도",
+     "icon": "°",
+     "body": "^\\circ",
+     "math": true,
+     "desc": "글 속에서 쓰면 25$^\\circ$처럼 $ $로 감싸진다"
+    },
+    {
+     "trigger": "app",
+     "name": "≈ 근사",
+     "icon": "≈",
+     "body": "\\approx",
+     "math": true
+    },
+    {
+     "trigger": "sim",
+     "name": "∼ 대략",
+     "icon": "∼",
+     "body": "\\sim",
+     "math": true
+    },
+    {
+     "trigger": "pm",
+     "name": "±",
+     "icon": "±",
+     "body": "\\pm",
+     "math": true
+    },
+    {
+     "trigger": "le",
+     "name": "≤",
+     "icon": "≤",
+     "body": "\\le",
+     "math": true
+    },
+    {
+     "trigger": "ge",
+     "name": "≥",
+     "icon": "≥",
+     "body": "\\ge",
+     "math": true
+    },
+    {
+     "trigger": "inf",
+     "name": "∞ 무한대",
+     "icon": "∞",
+     "body": "\\infty",
+     "math": true
+    },
+    {
+     "trigger": "pd",
+     "name": "∂ 편미분",
+     "icon": "∂",
+     "body": "\\partial",
+     "math": true
+    },
+    {
+     "trigger": "nab",
+     "name": "∇ 기울기",
+     "icon": "∇",
+     "body": "\\nabla",
+     "math": true
+    },
+    {
+     "trigger": "arr",
+     "name": "→ 화살표",
+     "icon": "→",
+     "body": "\\to",
+     "math": true
+    }
+   ]
+  },
+  {
+   "name": "그리스 문자",
+   "items": [
+    {
+     "trigger": "alpha",
+     "name": "α 알파",
+     "icon": "α",
+     "body": "\\alpha",
+     "math": true
+    },
+    {
+     "trigger": "beta",
+     "name": "β 베타",
+     "icon": "β",
+     "body": "\\beta",
+     "math": true
+    },
+    {
+     "trigger": "gamma",
+     "name": "γ 감마",
+     "icon": "γ",
+     "body": "\\gamma",
+     "math": true
+    },
+    {
+     "trigger": "Gamma",
+     "name": "Γ 대문자 감마",
+     "icon": "Γ",
+     "body": "\\Gamma",
+     "math": true
+    },
+    {
+     "trigger": "delta",
+     "name": "δ 델타",
+     "icon": "δ",
+     "body": "\\delta",
+     "math": true
+    },
+    {
+     "trigger": "Delta",
+     "name": "Δ 대문자 델타",
+     "icon": "Δ",
+     "body": "\\Delta",
+     "math": true
+    },
+    {
+     "trigger": "eps",
+     "name": "ε 엡실론",
+     "icon": "ε",
+     "body": "\\varepsilon",
+     "math": true
+    },
+    {
+     "trigger": "theta",
+     "name": "θ 세타",
+     "icon": "θ",
+     "body": "\\theta",
+     "math": true
+    },
+    {
+     "trigger": "lambda",
+     "name": "λ 람다",
+     "icon": "λ",
+     "body": "\\lambda",
+     "math": true
+    },
+    {
+     "trigger": "mu",
+     "name": "μ 뮤",
+     "icon": "μ",
+     "body": "\\mu",
+     "math": true
+    },
+    {
+     "trigger": "nu",
+     "name": "ν 뉴",
+     "icon": "ν",
+     "body": "\\nu",
+     "math": true
+    },
+    {
+     "trigger": "pi",
+     "name": "π 파이",
+     "icon": "π",
+     "body": "\\pi",
+     "math": true
+    },
+    {
+     "trigger": "rho",
+     "name": "ρ 로",
+     "icon": "ρ",
+     "body": "\\rho",
+     "math": true
+    },
+    {
+     "trigger": "sigma",
+     "name": "σ 시그마",
+     "icon": "σ",
+     "body": "\\sigma",
+     "math": true
+    },
+    {
+     "trigger": "Sigma",
+     "name": "Σ 대문자 시그마",
+     "icon": "Σ",
+     "body": "\\Sigma",
+     "math": true
+    },
+    {
+     "trigger": "tau",
+     "name": "τ 타우",
+     "icon": "τ",
+     "body": "\\tau",
+     "math": true
+    },
+    {
+     "trigger": "phi",
+     "name": "φ 파이",
+     "icon": "ϕ",
+     "body": "\\phi",
+     "math": true
+    },
+    {
+     "trigger": "vphi",
+     "name": "φ 바리 파이",
+     "icon": "φ",
+     "body": "\\varphi",
+     "math": true
+    },
+    {
+     "trigger": "chi",
+     "name": "χ 카이",
+     "icon": "χ",
+     "body": "\\chi",
+     "math": true
+    },
+    {
+     "trigger": "eta",
+     "name": "η 에타",
+     "icon": "η",
+     "body": "\\eta",
+     "math": true
+    },
+    {
+     "trigger": "omega",
+     "name": "ω 오메가",
+     "icon": "ω",
+     "body": "\\omega",
+     "math": true
+    },
+    {
+     "trigger": "Omega",
+     "name": "Ω 대문자 오메가",
+     "icon": "Ω",
+     "body": "\\Omega",
+     "math": true
+    }
+   ]
+  },
+  {
+   "name": "단위",
+   "items": [
+    {
+     "trigger": "ang",
+     "name": "Å 옹스트롬",
+     "icon": "Å",
+     "body": "~\\AA{}",
+     "math": false,
+     "desc": "숫자 뒤에 붙는다. 3.2~\\AA{}"
+    },
+    {
+     "trigger": "ev",
+     "name": "eV",
+     "icon": "eV",
+     "body": "~eV",
+     "math": false,
+     "desc": "숫자 뒤에 붙는다. 0.39~eV"
+    },
+    {
+     "trigger": "mev",
+     "name": "meV",
+     "icon": "meV",
+     "body": "~meV",
+     "math": false
+    },
+    {
+     "trigger": "nm",
+     "name": "nm",
+     "icon": "nm",
+     "body": "~nm",
+     "math": false
+    },
+    {
+     "trigger": "kel",
+     "name": "K 켈빈",
+     "icon": "K",
+     "body": "~K",
+     "math": false
+    }
+   ]
+  },
+  {
+   "name": "참조·인용",
+   "items": [
+    {
+     "trigger": "cite",
+     "name": "인용 ~\\cite{ }",
+     "icon": "[1]",
+     "body": "~\\cite{${1}}",
+     "math": false
+    },
+    {
+     "trigger": "figref",
+     "name": "그림 참조 Figure~\\ref",
+     "icon": "Fig",
+     "body": "Figure~\\ref{fig:${1}}",
+     "math": false
+    },
+    {
+     "trigger": "secref",
+     "name": "절 참조 Section~\\ref",
+     "icon": "§",
+     "body": "Section~\\ref{sec:${1}}",
+     "math": false
+    },
+    {
+     "trigger": "tabref",
+     "name": "표 참조 Table~\\ref",
+     "icon": "Tab",
+     "body": "Table~\\ref{tab:${1}}",
+     "math": false
+    },
+    {
+     "trigger": "eqref",
+     "name": "식 참조 Eq.~\\eqref",
+     "icon": "(1)",
+     "body": "Eq.~\\eqref{eq:${1}}",
+     "math": false
+    },
+    {
+     "trigger": "lab",
+     "name": "라벨 \\label{ }",
+     "icon": "lbl",
+     "body": "\\label{${1}}",
+     "math": false
+    }
+   ]
+  },
+  {
+   "name": "문서 구조",
+   "items": [
+    {
+     "trigger": "fig",
+     "name": "그림 figure[H]",
+     "icon": "▣",
+     "body": "\\begin{figure}[H]\n\\centering\n\\includegraphics[width=${1:0.8}\\linewidth]{${2:file}}\n\\caption{${3:caption}}\n\\label{fig:${4:label}}\n\\end{figure}",
+     "math": false,
+     "desc": "Tab으로 폭 → 파일 → 캡션 → 라벨 순서로 고친다"
+    },
+    {
+     "trigger": "tab",
+     "name": "표 table[H]",
+     "icon": "▦",
+     "body": "\\begin{table}[H]\n\\centering\n\\caption{${1:caption}}\n\\label{tab:${2:label}}\n\\begin{tabular}{${3:lcc}}\n\\hline\n${4}\n\\hline\n\\end{tabular}\n\\end{table}",
+     "math": false
+    },
+    {
+     "trigger": "eq",
+     "name": "번호 붙은 식 equation",
+     "icon": "(1)",
+     "body": "\\begin{equation}\n  ${1}\n  \\label{eq:${2}}\n\\end{equation}",
+     "math": false
+    },
+    {
+     "trigger": "eqs",
+     "name": "번호 없는 식 \\[ \\]",
+     "icon": "[ ]",
+     "body": "\\[\n  ${1}\n\\]",
+     "math": false
+    },
+    {
+     "trigger": "sec",
+     "name": "절 \\section",
+     "icon": "§",
+     "body": "\\section{${1}}\n\\label{sec:${2}}",
+     "math": false
+    },
+    {
+     "trigger": "ssec",
+     "name": "소절 \\subsection",
+     "icon": "§§",
+     "body": "\\subsection{${1}}\n\\label{sec:${2}}",
+     "math": false
+    },
+    {
+     "trigger": "item",
+     "name": "목록 itemize",
+     "icon": "•",
+     "body": "\\begin{itemize}\n  \\item ${1}\n\\end{itemize}",
+     "math": false
+    }
+   ]
+  },
+  {
+   "name": "글자 모양",
+   "items": [
+    {
+     "trigger": "tbf",
+     "name": "굵게 \\textbf",
+     "icon": "B",
+     "body": "\\textbf{${SEL}}",
+     "math": false,
+     "desc": "글자를 고른 채로 쓰면 그 글자를 감싼다",
+     "key": "Cmd-B"
+    },
+    {
+     "trigger": "tit",
+     "name": "기울임 \\textit",
+     "icon": "I",
+     "body": "\\textit{${SEL}}",
+     "math": false,
+     "desc": "글자를 고른 채로 쓰면 그 글자를 감싼다",
+     "key": "Cmd-I"
+    },
+    {
+     "trigger": "mm",
+     "name": "인라인 수식 $ $",
+     "icon": "$",
+     "body": "$${SEL}$",
+     "math": false,
+     "desc": "글자를 고른 채로 쓰면 그 글자를 $ $로 감싼다",
+     "key": "Cmd-E"
+    },
+    {
+     "trigger": "mbox",
+     "name": "한 줄로 묶기 \\mbox",
+     "icon": "▭",
+     "body": "\\mbox{${SEL}}",
+     "math": false,
+     "desc": "줄이 바뀌지 않게 묶는다. \\mbox{$n=3$}"
+    }
+   ]
+  }
+ ]
+}
